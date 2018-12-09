@@ -81,7 +81,7 @@ def update(address):
     # push temp
     blynkrequest("http://" + blynkserver + "/" + auth_token + "/update/" + temp_pin + "?value=" + val_temp)
 
-    if val_temp < 20:
+    if float(val_temp) < 20:
       # send notification
       # http://blynk-cloud.com/auth_token/notify
       postblynkrequest("http://" + blynkserver + "/" + auth_token + "/notify", {'body': 'Температура у ежа меньше 20 градусов!'})
