@@ -20,7 +20,7 @@ def blynkrequest(url):
   response = urllib.request.urlopen(request)
   return response.read()
 
-def postblynkrequest(url, payload)
+def postblynkrequest(url, payload):
   data = parse.urlencode(payload).encode()
   req =  request.Request(url, data=data) # this will make the method "POST"
   resp = request.urlopen(req)
