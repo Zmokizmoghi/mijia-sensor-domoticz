@@ -4,30 +4,26 @@ import time
 from mijia.mijia_poller import MijiaPoller, \
     MI_HUMIDITY, MI_TEMPERATURE, MI_BATTERY
 
-# Settings for the domoticz server
+# Settings for the blynk server
 
-# Forum see: http://domoticz.com/forum/viewtopic.php?f=56&t=13306&hilit=mi+flora&start=20#p105255
+# url: http://blynkserver/auth_token/update/pin?value=value
 
-domoticzserver   = "127.0.0.1:8000"
-domoticzusername = ""
-domoticzpassword = ""
+blynkserver = "192.168.31.222"
+auth_token = ""
+temp_pin = "V0"
+humidity_pin = "V1"
+battery_pin = "V2"
 
-# So id devices use: sudo hcitool lescan
-
-# Sensor IDs
-
-# Create virtual sensors in dummy hardware
-# type temperature & humidity
-
-
-# base64string = base64.encodestring(('%s:%s' % (domoticzusername, domoticzpassword)).encode()).decode().replace('\n', '')
-
-def domoticzrequest (url):
+def blynkrequest(url):
   print(url)
-  # request = urllib.request.Request(url)
-  # request.add_header("Authorization", "Basic %s" % base64string)
-  # response = urllib.request.urlopen(request)
-  # return response.read()
+  request = urllib.request.Request(url)
+  response = urllib.request.urlopen(request)
+  return response.read()
+
+def postblynkrequest(url, payload)
+  data = parse.urlencode(payload).encode()
+  req =  request.Request(url, data=data) # this will make the method "POST"
+  resp = request.urlopen(req)
 
 def update(address):
 
@@ -54,7 +50,11 @@ def update(address):
         print("Error reading value\n")
         return
 
-    global domoticzserver
+    global blynkserver
+    global auth_token
+    global temp_pin
+    global humidity_pin
+    global battery_pin
 
     print("Mi Sensor: " + address)
     print("Firmware: {}".format(poller.firmware_version()))
@@ -65,27 +65,30 @@ def update(address):
 
     val_bat  = "{}".format(poller.parameter_value(MI_BATTERY))
 
-    # Update temp
-    #val_temp = "{}".format(poller.parameter_value(MI_TEMPERATURE))
-    #domoticzrequest("http://" + domoticzserver + "/json.htm?type=command&param=udevice&idx=" + idx_temp + "&nvalue=0&svalue=" + val_temp + "&battery=" + val_bat)
-
-    # Update humidity
-    #val_hum = "{}".format(poller.parameter_value(MI_HUMIDITY))
-    #domoticzrequest("http://" + domoticzserver + "/json.htm?type=command&param=udevice&idx=" + idx_hum + "&svalue=" + val_hum + "&battery=" + val_bat)
-
-	#/json.htm?type=command&param=udevice&idx=IDX&nvalue=0&svalue=TEMP;HUM;HUM_STAT
     val_temp = "{}".format(poller.parameter_value(MI_TEMPERATURE))
     val_hum = "{}".format(poller.parameter_value(MI_HUMIDITY))
 
-    val_comfort = "0"
-    if float(val_hum) < 40:
-        val_comfort = "2"
-    elif float(val_hum) <= 70:
-        val_comfort = "1"
-    elif float(val_hum) > 70:
-        val_comfort = "3"
+    # val_comfort = "0"
+    # if float(val_hum) < 40:
+    #     val_comfort = "2"
+    # elif float(val_hum) <= 70:
+    #     val_comfort = "1"
+    # elif float(val_hum) > 70:
+    #     val_comfort = "3"
 
-    domoticzrequest("http://" + domoticzserver + "/json.htm?type=command&param=udevice&idx=" + idx_temp + "&nvalue=0&svalue=" + val_temp + ";" + val_hum + ";"+ val_comfort + "&battery=" + val_bat)
+    # http://blynkserver/auth_token/update/pin?value=value
+
+    # push temp
+    blynkrequest("http://" + blynkserver + "/" + auth_token + "/update/" + temp_pin + "?value=" + val_temp)
+
+    if val_temp < 20:
+      # send notification
+      # http://blynk-cloud.com/auth_token/notify
+      postblynkrequest("http://" + blynkserver + "/" + auth_token + "/notify", {'body': 'Температура у ежа меньше 20 градусов!'})
+
+
+    # push humidity
+    blynkrequest("http://" + blynkserver + "/" + auth_token + "/update/" + humidity_pin + "?value=" + val_hum)
 
 
 print("\n1: updating")
